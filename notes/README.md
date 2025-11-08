@@ -11,29 +11,23 @@ Welcome to the Material Tracker documentation vault! This is your central hub fo
 - [[20-data-model]] - Database schema and TypeScript types
 
 ## Features
-- [[30-navigation]] - expo-router file-based routing explained
-- [[40-color-extraction]] - How color palette extraction and semantic naming works
-- [[50-local-storage]] - SQLite setup and CRUD operations
+- [[70-server-architecture]] - Unraid server integration with Postgres/MongoDB/MariaDB
 
 ## Project Files
-- `CHANGELOG.md` - Version history and change log
-- `ROADMAP.md` - Future features and known issues
-- `README.md` - Quick start guide for developers
+- `SETUP_UNRAID.md` - 5-minute Unraid server setup guide
 
 ## Learning Path (Recommended Order)
 1. Start with [[00-overview]] to understand the vision
 2. Read [[10-stack-choices]] to learn why we picked this tech
 3. Review [[20-data-model]] to see how data is structured
 4. Follow [[60-getting-started]] to run the app
-5. Dive into [[30-navigation]], [[40-color-extraction]], [[50-local-storage]] as needed
+5. **NEW**: Read [[70-server-architecture]] to set up Unraid server storage
+6. Dive into [[30-navigation]], [[40-color-extraction]], [[50-local-storage]] as needed
 
 ## Key Concepts to Learn
-- **Expo**: React Native framework with web support and great DX
-- **expo-router**: File-system based routing (like Next.js)
-- **expo-sqlite**: Cross-platform SQLite database
-- **expo-image-picker**: Native camera & photo library access
-- **k-means clustering**: Color palette extraction algorithm
-- **HSV color space**: Hue-saturation-value for color classification
+- **Offline-first sync**: Local cache with server synchronization
+- **Express API**: REST API server for database operations
+- **Docker Compose**: Container orchestration for easy deployment
 
 ## Tips for Your Wife (App User)
 1. Take clear photos with good lighting for best color detection
