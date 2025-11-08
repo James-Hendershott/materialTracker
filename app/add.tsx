@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, Platform, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { saveMaterial } from '../src/storage/db';
+import { saveMaterial, uploadImage } from '../src/storage/db';
 import { extractPaletteWeb, toBuckets } from '../src/utils/colors';
 import { v4 as uuidv4 } from 'uuid';
 import { ColorRGB } from '../src/types';
@@ -42,6 +42,10 @@ export default function AddMaterialScreen() {
     setSaving(true);
     try {
       const id = uuidv4();
+      
+      // Upload image to server (or keep local URI as fallback)
+      const uploadedImageUri = await uploadImage(image);
+      
       let colors: ColorRGB[] = [];
       if (Platform.OS === 'web' && image) {
         try {
@@ -51,7 +55,16 @@ export default function AddMaterialScreen() {
           console.warn('Palette extraction failed on web', e);
         }
       }
-      await saveMaterial({ id, name, location, imageUri: image, colors, notes, createdAt: Date.now(), updatedAt: Date.now() });
+      await saveMaterial({ 
+        id, 
+        name, 
+        location, 
+        imageUri: uploadedImageUri, 
+        colors, 
+        notes, 
+        createdAt: Date.now(), 
+        updatedAt: Date.now() 
+      });
       router.replace('/');
     } catch (e) {
       console.error(e);

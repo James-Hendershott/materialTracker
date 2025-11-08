@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: materialtracker-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: materialtracker
+      POSTGRES_USER: materialtracker_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - materialtracker
+
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: materialtracker-api
+    restart: unless-stopped
+    environment:
+      DATABASE_TYPE: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: materialtracker
+      POSTGRES_USER: materialtracker_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PORT: 3001
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    networks:
+      - materialtracker
+
+volumes:
+  postgres_data:
+  uploads:
+
+networks:
+  materialtracker:
+    driver: bridge

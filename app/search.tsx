@@ -12,9 +12,12 @@ export default function SearchScreen() {
   const [query, setQuery] = React.useState('');
 
   React.useEffect(() => {
-    const list = getAllMaterials();
-    setAllMaterials(list);
-    setFiltered(list);
+    async function loadMaterials() {
+      const list = await getAllMaterials();
+      setAllMaterials(list);
+      setFiltered(list);
+    }
+    loadMaterials();
   }, []);
 
   React.useEffect(() => {

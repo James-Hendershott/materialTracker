@@ -9,10 +9,13 @@ export default function DetailScreen() {
   const [material, setMaterial] = React.useState<Material | null>(null);
 
   React.useEffect(() => {
-    if (id) {
-      const mat = getMaterialById(id);
-      setMaterial(mat);
+    async function loadMaterial() {
+      if (id) {
+        const mat = await getMaterialById(id);
+        setMaterial(mat);
+      }
     }
+    loadMaterial();
   }, [id]);
 
   if (!material) {

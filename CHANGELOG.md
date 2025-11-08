@@ -2,6 +2,27 @@
 
 All notable changes will be documented in this file.
 
+## [0.2.0] - 2025-11-08
+### Added
+- **Server-side storage** with support for PostgreSQL, MongoDB, and MariaDB on Unraid
+- Express API server (`server.ts`) with REST endpoints for materials and images
+- Database adapters for Postgres, MongoDB, and MariaDB with unified interface
+- Image upload endpoint and server-side storage
+- Offline-first architecture: local SQLite cache with background server sync
+- Environment configuration system with `.env.local` support
+- Server architecture documentation in `notes/70-server-architecture.md`
+- npm scripts for running API server: `npm run server`, `npm run server:prod`
+
+### Changed
+- Updated `db.ts` to use server API with automatic fallback to local storage
+- Modified Add screen to upload images to server
+- Updated Search and Detail screens to use async material loading
+- Added `synced` column to local SQLite for tracking sync status
+
+### Dependencies
+- Added: `@supabase/supabase-js`, `express`, `cors`, `multer`, `pg`, `mongodb`, `mysql2`, `dotenv`
+- Added dev: `@types/express`, `@types/cors`, `@types/multer`, `@types/pg`, `ts-node`, `nodemon`
+
 ## [0.1.0] - 2025-11-08
 ### Added
 - Initialized Expo TypeScript project with web + native support.

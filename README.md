@@ -1,40 +1,104 @@
 # Material Tracker
 
-A cross-platform (iOS, Android, Web) Expo app for cataloging textile materials (yarn, cloth, fabrics).
+A cross-platform (iOS, Android, Web) Expo app for cataloging textile materials (yarn, cloth, fabrics) with **server-side storage on your Unraid server**.
 
 ## Features
-- **Capture or Upload**: Take a photo or choose from your library.
-- **Metadata**: Store name, location (bin/shelf), and notes.
-- **Color Extraction**: Automatically detect dominant colors on web (hue-based naming).
-- **Search**: Find materials by name, location, or color keywords (e.g., "green", "blue").
+- **Server Storage**: Data stored on your Unraid server (PostgreSQL/MongoDB/MariaDB).
+- **Offline-First**: Works offline, syncs automatically when connected.
+- **Color Extraction**: Automatically detect dominant colors (web).
+- **Smart Search**: Find materials by name, location, or color keywords (e.g., "green", "blue").
+- **Image Management**: Images uploaded to your server, accessible from all devices.
+
+## Architecture
+
+```
+┌─────────────────┐
+│   Mobile/Web    │  ← Expo app (iOS/Android/Web)
+│     Client      │  ← Local SQLite cache
+└────────┬────────┘
+         │ HTTP
+┌────────▼────────┐
+│  Express API    │  ← server.ts (runs on Unraid)
+│     Server      │
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│     Unraid      │  ← Your home server
+│   Databases     │
+│ Postgres/Mongo  │
+│    /MariaDB     │
+└─────────────────┘
+```
 
 ## Quick Start
 
-### Prerequisites
-- Node.js 20+ (for Expo CLI)
-- npm or yarn
-
-### Install & Run
+### Client (Mobile/Web App)
 
 1. **Install dependencies**:
    ```sh
    npm install
    ```
 
-2. **Start the dev server**:
+2. **Configure server connection** (optional, uses local SQLite if skipped):
+   
+   Create `.env.local`:
+   ```env
+   EXPO_PUBLIC_API_URL=http://192.168.1.xxx:3001/api
+   EXPO_PUBLIC_USE_SERVER=true
+   ```
+
+3. **Start the app**:
    ```sh
    npm start
    ```
-   This will open the Expo dev tools. You can then:
-   - Press `w` to open in a web browser.
-   - Scan the QR code with the Expo Go app (iOS/Android) to preview on a physical device.
-   - Press `a` for Android emulator or `i` for iOS simulator (macOS only).
+   Then:
+   - Press `w` for web browser
+   - Press `a` for Android emulator
+   - Press `i` for iOS simulator (macOS only)
+   - Scan QR with Expo Go app for physical devices
 
-3. **Run on specific platforms**:
+### Server (Unraid / API)
+
+#### Option A: Docker Compose (Recommended for Unraid)
+
+1. **Configure environment**:
+   
+   Create `.env` file:
+   ```env
+   POSTGRES_PASSWORD=your_secure_password
+   ```
+
+2. **Start services**:
    ```sh
-   npm run web      # Web browser
-   npm run android  # Android emulator/device
-   npm run ios      # iOS simulator (macOS only)
+   docker-compose up -d
+   ```
+
+This starts PostgreSQL and the API server on port 3001.
+
+#### Option B: Manual Setup
+
+1. **Set up database** on your Unraid server (see `notes/70-server-architecture.md`)
+
+2. **Configure `.env.local`**:
+   ```env
+   DATABASE_TYPE=postgres
+   POSTGRES_HOST=192.168.1.xxx
+   POSTGRES_PORT=5432
+   POSTGRES_DB=materialtracker
+   POSTGRES_USER=materialtracker_user
+   POSTGRES_PASSWORD=your_password
+   ```
+
+3. **Run server**:
+   ```sh
+   npm run server
+   ```
+
+   For production with PM2:
+   ```sh
+   npm i -g pm2
+   pm2 start server.ts --name material-tracker
+   pm2 save
    ```
 
 ## Project Structure
