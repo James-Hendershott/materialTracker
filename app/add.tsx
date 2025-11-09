@@ -16,7 +16,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { saveMaterial, uploadImage } from '../src/storage/db';
-import { extractPaletteWeb, toBuckets } from '../src/utils/colors';
+import { extractPalette, toBuckets } from '../src/utils/colors';
 import { v4 as uuidv4 } from 'uuid';
 import { ColorRGB } from '../src/types';
 
@@ -59,13 +59,15 @@ export default function AddMaterialScreen() {
       // Upload image to server (or keep local URI as fallback)
       const uploadedImageUri = await uploadImage(image);
       
+      // Extract color palette (works on both web and native now!)
       let colors: ColorRGB[] = [];
-      if (Platform.OS === 'web' && image) {
+      if (image) {
         try {
-          const palette = await extractPaletteWeb(image, 5);
+          const palette = await extractPalette(image, 5);
           colors = palette.map((c: ColorRGB) => ({ ...c, name: toBuckets([c])[0].name }));
+          console.log(`✓ Extracted ${colors.length} colors:`, colors.map(c => c.name).join(', '));
         } catch (e) {
-          console.warn('Palette extraction failed on web', e);
+          console.warn('Palette extraction failed', e);
         }
       }
       await saveMaterial({ 
@@ -130,9 +132,11 @@ export default function AddMaterialScreen() {
                 <Button title="Choose Image" onPress={chooseFromLibrary} />
               </View>
               <Button title={saving ? 'Saving…' : 'Save'} onPress={onSave} disabled={saving} />
-              {Platform.OS !== 'web' && (
-                <Text style={styles.hint}>Color extraction will be added on native soon. For now, you can still save and search by name.</Text>
-              )}
+              <Text style={styles.hint}>
+                {Platform.OS === 'web' 
+                  ? 'Colors are automatically extracted from your image.'
+                  : 'Colors will be extracted automatically when you save!'}
+              </Text>
             </View>
           </View>
         </TouchableWithoutFeedback>

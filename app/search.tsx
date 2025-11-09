@@ -57,11 +57,30 @@ export default function SearchScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.location}>{item.location || 'No location'}</Text>
-              <View style={{ flexDirection: 'row', marginTop: 4, gap: 4 }}>
-                {item.colors.slice(0, 5).map((c, i) => (
-                  <View key={i} style={{ width: 20, height: 20, backgroundColor: c.hex, borderRadius: 4 }} />
-                ))}
-              </View>
+              {item.colors && item.colors.length > 0 ? (
+                <View style={{ marginTop: 6 }}>
+                  <View style={{ flexDirection: 'row', gap: 4, marginBottom: 4 }}>
+                    {item.colors.slice(0, 5).map((c, i) => (
+                      <View 
+                        key={i} 
+                        style={{ 
+                          width: 24, 
+                          height: 24, 
+                          backgroundColor: c.hex, 
+                          borderRadius: 4,
+                          borderWidth: 1,
+                          borderColor: '#ddd'
+                        }} 
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.colorText}>
+                    {item.colors.slice(0, 3).map(c => c.name).join(', ')}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.colorText}>No colors extracted</Text>
+              )}
             </View>
           </TouchableOpacity>
         )}
@@ -77,5 +96,6 @@ const styles = StyleSheet.create({
   card: { flexDirection: 'row', gap: 12, padding: 12, borderRadius: 8, backgroundColor: '#f9f9f9', marginBottom: 8 },
   thumb: { width: 80, height: 80, borderRadius: 6 },
   name: { fontSize: 16, fontWeight: '600' },
-  location: { fontSize: 12, color: '#666' }
+  location: { fontSize: 12, color: '#666' },
+  colorText: { fontSize: 11, color: '#888', fontStyle: 'italic', marginTop: 2 }
 });
