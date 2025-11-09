@@ -45,7 +45,14 @@ A cross-platform (iOS, Android, Web) Expo app for cataloging textile materials (
    ```env
    EXPO_PUBLIC_API_URL=http://192.168.1.xxx:3001/api
    EXPO_PUBLIC_USE_SERVER=true
+   EXPO_PUBLIC_API_KEY=your-generated-api-key
    ```
+   
+   > **Security Note**: Generate a secure API key with:
+   > ```bash
+   > node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   > ```
+   > See `notes/80-security-setup.md` for full security guide.
 
 3. **Start the app**:
    ```sh
@@ -66,7 +73,10 @@ A cross-platform (iOS, Android, Web) Expo app for cataloging textile materials (
    Create `.env` file:
    ```env
    POSTGRES_PASSWORD=your_secure_password
+   API_KEY=your-generated-api-key
    ```
+   
+   Generate API key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
 2. **Start services**:
    ```sh
@@ -79,7 +89,7 @@ This starts PostgreSQL and the API server on port 3001.
 
 1. **Set up database** on your Unraid server (see `notes/70-server-architecture.md`)
 
-2. **Configure `.env.local`**:
+2. **Configure `.env`** (for server):
    ```env
    DATABASE_TYPE=postgres
    POSTGRES_HOST=192.168.1.xxx
@@ -87,6 +97,7 @@ This starts PostgreSQL and the API server on port 3001.
    POSTGRES_DB=materialtracker
    POSTGRES_USER=materialtracker_user
    POSTGRES_PASSWORD=your_password
+   API_KEY=your-generated-api-key
    ```
 
 3. **Run server**:

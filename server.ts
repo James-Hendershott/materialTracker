@@ -1,12 +1,23 @@
 // Express API server for Material Tracker
 // Run this on your Unraid server or locally to handle database operations
 
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+
+// Load .env from project root
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+console.log('🔧 Environment loaded:');
+console.log('  DATABASE_TYPE:', process.env.DATABASE_TYPE);
+console.log('  POSTGRES_HOST:', process.env.POSTGRES_HOST);
+console.log('  PORT:', process.env.PORT || 3001);
+
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import {
   initServerDatabase,
   saveMaterialServer,
@@ -17,10 +28,56 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const API_KEY = process.env.API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',').map((o: string) => o.trim()).filter(Boolean);
 
-// Middleware
-app.use(cors());
+// Security: Helmet for HTTP headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow image loading from different origins
+}));
+
+// Security: Rate limiting
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes default
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// CORS configuration
+const corsOptions: cors.CorsOptions = ALLOWED_ORIGINS && ALLOWED_ORIGINS.length > 0
+  ? {
+      origin: (origin, callback) => {
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
+      credentials: true,
+    }
+  : {}; // Allow all origins if ALLOWED_ORIGINS is empty (development mode)
+
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// API Key authentication middleware
+function requireApiKey(req: express.Request, res: express.Response, next: express.NextFunction) {
+  // Skip auth check if no API_KEY is set (for initial setup/development)
+  if (!API_KEY) {
+    console.warn('⚠️  WARNING: API_KEY not set. Authentication is disabled!');
+    return next();
+  }
+
+  const providedKey = req.headers['x-api-key'];
+  if (providedKey === API_KEY) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
+  }
+}
 
 // Image upload directory
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
@@ -65,13 +122,13 @@ initServerDatabase().catch((err) => {
 
 // ===== API Routes =====
 
-// Health check
+// Health check (public - no auth required)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
-// Get all materials
-app.get('/api/materials', async (req, res) => {
+// Get all materials (requires auth)
+app.get('/api/materials', requireApiKey, async (req, res) => {
   try {
     const materials = await getAllMaterialsServer();
     res.json(materials);
@@ -81,8 +138,8 @@ app.get('/api/materials', async (req, res) => {
   }
 });
 
-// Get single material
-app.get('/api/materials/:id', async (req, res) => {
+// Get single material (requires auth)
+app.get('/api/materials/:id', requireApiKey, async (req, res) => {
   try {
     const material = await getMaterialByIdServer(req.params.id);
     if (!material) {
@@ -95,8 +152,8 @@ app.get('/api/materials/:id', async (req, res) => {
   }
 });
 
-// Create/update material
-app.post('/api/materials', async (req, res) => {
+// Create/update material (requires auth)
+app.post('/api/materials', requireApiKey, async (req, res) => {
   try {
     const material = req.body;
     await saveMaterialServer(material);
@@ -107,8 +164,8 @@ app.post('/api/materials', async (req, res) => {
   }
 });
 
-// Delete material
-app.delete('/api/materials/:id', async (req, res) => {
+// Delete material (requires auth)
+app.delete('/api/materials/:id', requireApiKey, async (req, res) => {
   try {
     await deleteMaterialServer(req.params.id);
     res.json({ success: true });
@@ -118,8 +175,8 @@ app.delete('/api/materials/:id', async (req, res) => {
   }
 });
 
-// Upload image
-app.post('/api/upload', upload.single('image'), (req, res) => {
+// Upload image (requires auth)
+app.post('/api/upload', requireApiKey, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });

@@ -35,8 +35,25 @@ Material:
 ## Roadmap Snapshot
 See `ROADMAP.md` for prioritized items.
 
-## Learning Notes
-Each note file in this folder will break down concepts (navigation, storage, color extraction) in Obsidian-friendly Markdown.
+## Documentation Index
+- `10-stack-choices.md` - Tech stack decisions
+- `20-data-model.md` - Material entity schema
+- `30-navigation.md` - expo-router setup
+- `40-color-extraction.md` - Color palette extraction
+- `50-local-storage.md` - SQLite persistence
+- `60-getting-started.md` - Development setup
+- `70-server-architecture.md` - Express API & database adapters
+- `80-security-setup.md` - **API authentication, CORS, rate limiting**
+
+## Security
+Server endpoints are protected with:
+- **API Key Authentication** (x-api-key header)
+- **CORS Protection** (origin whitelist)
+- **Rate Limiting** (100 requests per 15 minutes)
+- **Helmet.js** (security headers)
+
+See `80-security-setup.md` for complete security configuration guide.
 
 ---
 Created: INITIAL
+Updated: 2025-11-09 - Added server security documentation

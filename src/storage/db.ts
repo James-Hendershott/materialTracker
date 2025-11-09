@@ -7,6 +7,7 @@ let db: SQLite.SQLiteDatabase | null = null;
 // Configuration - set this to your Unraid server URL
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
 const USE_SERVER = process.env.EXPO_PUBLIC_USE_SERVER !== 'false'; // Default to true
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY; // Optional: set in .env.local
 
 // Local SQLite database (fallback and cache)
 export function openDB() {
@@ -55,12 +56,19 @@ function getLocalMaterials(): Material[] {
 // Helper: Server API call with error handling
 async function fetchAPI(endpoint: string, options?: RequestInit) {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options?.headers as Record<string, string>,
+    };
+    
+    // Add API key if configured
+    if (API_KEY) {
+      headers['x-api-key'] = API_KEY;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
@@ -162,8 +170,14 @@ export async function uploadImage(uri: string): Promise<string> {
       type: 'image/jpeg',
     });
 
+    const headers: Record<string, string> = {};
+    if (API_KEY) {
+      headers['x-api-key'] = API_KEY;
+    }
+
     const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
+      headers,
       body: formData,
     });
 
