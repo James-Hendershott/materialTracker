@@ -61,19 +61,14 @@ export default function HomeScreen() {
         <Text style={styles.gridName} numberOfLines={1}>{item.name}</Text>
         <Text style={styles.gridLocation} numberOfLines={1}>{item.location || 'No location'}</Text>
         <View style={{ flexDirection: 'row', gap: 3, marginTop: 4 }}>
-          {item.colors?.slice(0, 4).map((c, i) => (
-            <View 
-              key={i} 
-              style={{ 
-                width: 16, 
-                height: 16, 
-                backgroundColor: c.hex, 
-                borderRadius: 3,
-                borderWidth: 0.5,
-                borderColor: '#ccc'
-              }} 
-            />
-          ))}
+            {item.colors?.slice(0, 3).map((c, i) => (
+              <View key={i} style={{ alignItems: 'center' }}>
+                <View style={[styles.colorChip, { backgroundColor: c.hex }]} />
+                {c.percent !== undefined ? (
+                  <Text style={styles.colorPercent}>{c.percent}%</Text>
+                ) : null}
+              </View>
+            ))}
         </View>
       </View>
     </TouchableOpacity>
@@ -200,12 +195,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    color: '#222'
   },
-  title: { 
-    fontSize: 28, 
+  colorChip: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd'
+  },
+  colorPercent: {
+    fontSize: 10,
+    color: '#555',
+    marginTop: 2,
+    lineHeight: 12
+  },
+  title: {
+    fontSize: 24,
     fontWeight: '700',
     color: '#222'
   },

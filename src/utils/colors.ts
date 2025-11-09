@@ -45,7 +45,7 @@ async function extractPaletteNative(imageUri: string, count: number): Promise<Co
     }
 
     // Run k-means clustering on sampled colors
-    const palette = simplePaletteKMeans(colorSamples, count);
+  const palette = simplePaletteKMeansWithPercents(colorSamples, count);
     console.log(`✓ Extracted ${palette.length} colors from image`);
     return palette;
     
@@ -116,7 +116,7 @@ export function extractPaletteWeb(imageUri: string, count: number): Promise<Colo
         samples.push([pixels[i], pixels[i + 1], pixels[i + 2]]);
       }
       // k-means (simple approach) or we pick the first N unique colors. For MVP: cluster top N.
-      const palette = simplePaletteKMeans(samples, count);
+  const palette = simplePaletteKMeansWithPercents(samples, count);
       resolve(palette);
     };
     img.onerror = reject;
@@ -154,6 +154,41 @@ function simplePaletteKMeans(samples: [number, number, number][], k: number): Co
     g: c[1],
     b: c[2],
     hex: rgbToHex(c[0], c[1], c[2])
+  }));
+}
+
+// Extended k-means returning percentage share per color
+function simplePaletteKMeansWithPercents(samples: [number, number, number][], k: number): ColorRGB[] {
+  if (!samples.length) return [];
+  // Random init (or first k samples)
+  let centroids = samples.slice(0, k).map((s) => [...s] as [number, number, number]);
+  const maxIter = 10;
+  let lastClusters: [number, number, number][][] = [];
+  for (let iter = 0; iter < maxIter; iter++) {
+    const clusters: [number, number, number][][] = Array.from({ length: k }, () => []);
+    for (const s of samples) {
+      let best = 0;
+      let bestDist = dist(s, centroids[0]);
+      for (let i = 1; i < k; i++) {
+        const d = dist(s, centroids[i]);
+        if (d < bestDist) { bestDist = d; best = i; }
+      }
+      clusters[best].push(s);
+    }
+    lastClusters = clusters;
+    centroids = clusters.map((c) => {
+      if (!c.length) return centroids[0];
+      const avg = c.reduce((acc, col) => [acc[0] + col[0], acc[1] + col[1], acc[2] + col[2]], [0, 0, 0]);
+      return [Math.round(avg[0] / c.length), Math.round(avg[1] / c.length), Math.round(avg[2] / c.length)] as [number, number, number];
+    });
+  }
+  const total = samples.length;
+  return centroids.map((c, idx) => ({
+    r: c[0],
+    g: c[1],
+    b: c[2],
+    hex: rgbToHex(c[0], c[1], c[2]),
+    percent: lastClusters[idx] && lastClusters[idx].length ? parseFloat(((lastClusters[idx].length / total) * 100).toFixed(1)) : 0
   }));
 }
 

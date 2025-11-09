@@ -110,7 +110,7 @@ export default function DetailScreen() {
                       borderColor: '#ddd'
                     }} 
                   />
-                  <Text style={styles.colorName}>{c.name || 'Unknown'}</Text>
+                  <Text style={styles.colorName}>{c.name || 'Unknown'}{c.percent !== undefined ? ` • ${c.percent}%` : ''}</Text>
                   <Text style={styles.colorHex}>{c.hex}</Text>
                 </View>
               ))}
