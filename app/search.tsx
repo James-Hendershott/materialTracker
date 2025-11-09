@@ -120,7 +120,7 @@ export default function SearchScreen() {
                     ))}
                   </View>
                   <Text style={styles.colorText}>
-                    {item.colors.slice(0, 3).map(c => c.name).join(', ')}
+                    {item.colors.slice(0, 3).map(c => c.percent !== undefined ? `${c.name} ${c.percent}%` : c.name).join(', ')}
                   </Text>
                 </View>
               ) : (
