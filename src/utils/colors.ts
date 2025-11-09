@@ -7,9 +7,11 @@ import * as ImageManipulator from 'expo-image-manipulator';
 // Extract dominant colors - works on both web and native
 export async function extractPalette(imageUri: string, count: number = 5): Promise<ColorRGB[]> {
   if (Platform.OS === 'web') {
-    return extractPaletteWeb(imageUri, count);
+    const raw = await extractPaletteWeb(imageUri, count * 2);
+    return collapseToBaseColors(raw, count);
   } else {
-    return extractPaletteNative(imageUri, count);
+    const raw = await extractPaletteNative(imageUri, count * 2);
+    return collapseToBaseColors(raw, count);
   }
 }
 
@@ -183,13 +185,19 @@ function simplePaletteKMeansWithPercents(samples: [number, number, number][], k:
     });
   }
   const total = samples.length;
-  return centroids.map((c, idx) => ({
+  const result = centroids.map((c, idx) => ({
     r: c[0],
     g: c[1],
     b: c[2],
     hex: rgbToHex(c[0], c[1], c[2]),
     percent: lastClusters[idx] && lastClusters[idx].length ? parseFloat(((lastClusters[idx].length / total) * 100).toFixed(1)) : 0
   }));
+  // Normalize minor rounding to 100%
+  const sum = result.reduce((a, c) => a + (c.percent || 0), 0);
+  if (sum && Math.abs(sum - 100) > 0.1) {
+    return result.map((c) => ({ ...c, percent: parseFloat((((c.percent || 0) / sum) * 100).toFixed(1)) }));
+  }
+  return result;
 }
 
 function dist(a: [number, number, number], b: [number, number, number]) {
@@ -240,4 +248,79 @@ export function searchByColor(materials: any[], query: string): any[] {
     const buckets = toBuckets(m.colors);
     return buckets.some((b) => b.name.includes(lowerQuery));
   });
+}
+
+// Collapse arbitrary palette to base color categories and aggregate percentages
+export function collapseToBaseColors(colors: ColorRGB[], topN: number = 5): ColorRGB[] {
+  const base: { name: string; hex: string; r: number; g: number; b: number }[] = [
+    { name: 'black', hex: '#000000', r: 0, g: 0, b: 0 },
+    { name: 'gray', hex: '#808080', r: 128, g: 128, b: 128 },
+    { name: 'white', hex: '#ffffff', r: 255, g: 255, b: 255 },
+    { name: 'red', hex: '#ff0000', r: 255, g: 0, b: 0 },
+    { name: 'orange', hex: '#ffa500', r: 255, g: 165, b: 0 },
+    { name: 'yellow', hex: '#ffff00', r: 255, g: 255, b: 0 },
+    { name: 'green', hex: '#008000', r: 0, g: 128, b: 0 },
+    { name: 'blue', hex: '#0000ff', r: 0, g: 0, b: 255 },
+    { name: 'purple', hex: '#800080', r: 128, g: 0, b: 128 },
+    { name: 'brown', hex: '#8b4513', r: 139, g: 69, b: 19 },
+    { name: 'pink', hex: '#ffc0cb', r: 255, g: 192, b: 203 }
+  ];
+
+  // helper to convert rgb to hsv
+  function rgb2hsv(r: number, g: number, b: number) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
+    let h = 0;
+    const s = max === 0 ? 0 : d / max;
+    const v = max;
+    if (d !== 0) {
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    return { h: h * 360, s, v };
+  }
+
+  const agg: Record<string, number> = {};
+  for (const c of colors) {
+    const p = c.percent || 0;
+    const { h, s, v } = rgb2hsv(c.r, c.g, c.b);
+    // grayscale handling first
+    if (v < 0.18) { agg['black'] = (agg['black'] || 0) + p; continue; }
+    if (s < 0.12) {
+      if (v > 0.9) agg['white'] = (agg['white'] || 0) + p;
+      else agg['gray'] = (agg['gray'] || 0) + p;
+      continue;
+    }
+    // hue buckets
+    let name = 'red';
+    if (h >= 345 || h < 15) name = 'red';
+    else if (h < 45) name = 'orange';
+    else if (h < 65) name = 'yellow';
+    else if (h < 165) name = 'green';
+    else if (h < 255) name = 'blue';
+    else if (h < 300) name = 'purple';
+    else name = 'pink';
+
+    // brown detection: low value oranges/reds
+    if ((name === 'orange' || name === 'red') && v < 0.55 && s > 0.25) name = 'brown';
+    agg[name] = (agg[name] || 0) + p;
+  }
+
+  // transform to list and sort
+  const list = Object.entries(agg)
+    .map(([name, percent]) => {
+      const b = base.find((x) => x.name === name)!;
+      return { r: b.r, g: b.g, b: b.b, hex: b.hex, name, percent: parseFloat(percent.toFixed(1)) } as ColorRGB;
+    })
+    .sort((a, b) => (b.percent || 0) - (a.percent || 0));
+
+  // Normalize to 100
+  const total = list.reduce((acc, c) => acc + (c.percent || 0), 0) || 1;
+  const normalized = list.map((c) => ({ ...c, percent: parseFloat((((c.percent || 0) / total) * 100).toFixed(1)) }));
+  return normalized.slice(0, topN);
 }
