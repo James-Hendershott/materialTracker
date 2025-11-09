@@ -20,6 +20,12 @@ import { extractPalette, toBuckets } from '../src/utils/colors';
 import { v4 as uuidv4 } from 'uuid';
 import { ColorRGB } from '../src/types';
 
+function normalizePercents(cols: ColorRGB[]): ColorRGB[] {
+  const total = cols.reduce((acc, c) => acc + (c.percent || 0), 0);
+  if (total === 0) return cols;
+  return cols.map(c => ({ ...c, percent: parseFloat((((c.percent || 0) / total) * 100).toFixed(1)) }));
+}
+
 export default function AddMaterialScreen() {
   const router = useRouter();
   const [image, setImage] = React.useState<string | null>(null);
@@ -28,6 +34,8 @@ export default function AddMaterialScreen() {
   const [location, setLocation] = React.useState('');
   const [notes, setNotes] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [colors, setColors] = React.useState<ColorRGB[] | null>(null);
+  const [showEditColors, setShowEditColors] = React.useState(false);
 
   async function pickImage() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -43,6 +51,13 @@ export default function AddMaterialScreen() {
     if (!result.canceled) {
       setImage(result.assets[0].uri);
       setConfirmedCrop(false);
+      // Pre-extract palette for editing
+      try {
+        const palette = await extractPalette(result.assets[0].uri, 5);
+        setColors(palette);
+      } catch (e) {
+        console.warn('Pre-extract palette failed', e);
+      }
     }
   }
 
@@ -60,6 +75,13 @@ export default function AddMaterialScreen() {
     if (!result.canceled) {
       setImage(result.assets[0].uri);
       setConfirmedCrop(false);
+      // Pre-extract palette for editing
+      try {
+        const palette = await extractPalette(result.assets[0].uri, 5);
+        setColors(palette);
+      } catch (e) {
+        console.warn('Pre-extract palette failed', e);
+      }
     }
   }
 
@@ -79,13 +101,14 @@ export default function AddMaterialScreen() {
       // Upload image to server (or keep local URI as fallback)
       const uploadedImageUri = await uploadImage(image);
       
-      // Extract color palette (works on both web and native now!)
-      let colors: ColorRGB[] = [];
-      if (image) {
+      // Use edited colors if available; else extract on save
+      let finalColors: ColorRGB[] = [];
+      if (colors && colors.length) {
+        finalColors = normalizePercents(colors).map((c: ColorRGB) => ({ ...c, name: toBuckets([c])[0].name }));
+      } else if (image) {
         try {
           const palette = await extractPalette(image, 5);
-          colors = palette.map((c: ColorRGB) => ({ ...c, name: toBuckets([c])[0].name }));
-          console.log(`✓ Extracted ${colors.length} colors:`, colors.map(c => c.name).join(', '));
+          finalColors = palette.map((c: ColorRGB) => ({ ...c, name: toBuckets([c])[0].name }));
         } catch (e) {
           console.warn('Palette extraction failed', e);
         }
@@ -95,7 +118,7 @@ export default function AddMaterialScreen() {
         name, 
         location, 
         imageUri: uploadedImageUri, 
-        colors, 
+        colors: finalColors, 
         notes, 
         createdAt: Date.now(), 
         updatedAt: Date.now() 
@@ -158,6 +181,9 @@ export default function AddMaterialScreen() {
                   {!confirmedCrop && (
                     <Button title="Confirm Crop" onPress={() => setConfirmedCrop(true)} />
                   )}
+                  {colors && colors.length > 0 && (
+                    <Button title="Edit Colors" onPress={() => setShowEditColors(true)} />
+                  )}
                 </View>
               ) : null}
               <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
@@ -175,6 +201,53 @@ export default function AddMaterialScreen() {
           </View>
         </TouchableWithoutFeedback>
       </ScrollView>
+      {showEditColors && (
+        <View style={styles.editOverlay}>
+          <View style={styles.editSheet}>
+            <Text style={styles.editTitle}>Edit Colors</Text>
+            <ScrollView style={{ maxHeight: 320 }}>
+              {(colors || []).map((c, idx) => (
+                <View key={idx} style={styles.editRow}>
+                  <View style={[styles.editSwatch, { backgroundColor: c.hex }]} />
+                  <TextInput
+                    value={c.hex}
+                    onChangeText={(val) => {
+                      setColors((prev) => {
+                        if (!prev) return prev;
+                        const next = [...prev];
+                        next[idx] = { ...next[idx], hex: val } as ColorRGB;
+                        return next;
+                      });
+                    }}
+                    style={styles.editHex}
+                    placeholder="#RRGGBB"
+                    autoCapitalize="none"
+                  />
+                  <TextInput
+                    value={String(c.percent ?? 0)}
+                    onChangeText={(val) => {
+                      const num = parseFloat(val) || 0;
+                      setColors((prev) => {
+                        if (!prev) return prev;
+                        const next = [...prev];
+                        next[idx] = { ...next[idx], percent: num } as ColorRGB;
+                        return next;
+                      });
+                    }}
+                    style={styles.editPercent}
+                    keyboardType="numeric"
+                    placeholder="%"
+                  />
+                </View>
+              ))}
+            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <Button title="Normalize" onPress={() => colors && setColors(normalizePercents(colors))} />
+              <Button title="Done" onPress={() => setShowEditColors(false)} />
+            </View>
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -230,5 +303,55 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 12,
     color: '#555'
+  },
+  editOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'flex-end'
+  },
+  editSheet: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16
+  },
+  editTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8
+  },
+  editSwatch: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd'
+  },
+  editHex: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 8
+  },
+  editPercent: {
+    width: 64,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 8,
+    textAlign: 'right'
   }
 });
