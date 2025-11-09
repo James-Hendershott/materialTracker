@@ -15,19 +15,24 @@
 - ✅ Security headers (Helmet.js)
 - ✅ **Display color swatches and names in search**
 
+## ✅ Completed (latest)
+- ✅ Home screen material list/grid view
+- ✅ Material deletion UI
+- ✅ Refresh/pull-to-refresh on search screen
+- ✅ Loading states and error handling UI (Home, Detail, Search baseline)
+- ✅ Image cropping support via native picker
+- ✅ Require crop confirmation before saving (guidance to crop to only the material)
+- ✅ Color percentage extraction (displayed across app)
+- ✅ Manual color editing (hex and percent) on Add screen
+
 ## In Progress
-- [x] Home screen material list/grid view
-- [x] Material deletion UI
-- [x] Refresh/pull-to-refresh on search screen
-- [x] Loading states and error handling UI (Home, Detail, Search baseline)
-- [ ] Can you allow the user to crop the image to be only the material and not the background?
-- [ ] When colors are extracted, is there a way to add a percentage of the color? e.g. Blue 82%
 - [ ] Add an Inventory Page
 - [ ] Add a QTY tracker with live updates including mins and maxes
 - [ ] Add Categories, ability to create and use categories and edit.
 - [ ] Add a Project Page (Create a Project, add material to the project, add Image)
 - [ ] Add a Shopping List
 - [ ] Add a modern look and sleek user experience
+- [ ] Add a color dropper tool to pick specific colors from the image (eyedropper)
 
 ## Near-term Enhancements
 - [ ] Authentication (JWT-based user login)
@@ -73,6 +78,7 @@
 - No conflict resolution for simultaneous edits from multiple devices
 - Image upload may fail on slow connections (no retry logic)
 - Color extraction accuracy can vary (base64 sampling approximation)
+- Colors being extracted are way off. Black shirt with Gray and Red is coming up with red - 28% #694944, Gray -16% #685f
 
 ---
 Updated: 2025-11-09
