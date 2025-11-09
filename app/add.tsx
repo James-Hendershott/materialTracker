@@ -23,6 +23,7 @@ import { ColorRGB } from '../src/types';
 export default function AddMaterialScreen() {
   const router = useRouter();
   const [image, setImage] = React.useState<string | null>(null);
+  const [confirmedCrop, setConfirmedCrop] = React.useState(false);
   const [name, setName] = React.useState('');
   const [location, setLocation] = React.useState('');
   const [notes, setNotes] = React.useState('');
@@ -41,6 +42,7 @@ export default function AddMaterialScreen() {
     });
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+      setConfirmedCrop(false);
     }
   }
 
@@ -57,12 +59,17 @@ export default function AddMaterialScreen() {
     });
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+      setConfirmedCrop(false);
     }
   }
 
   async function onSave() {
     if (!name || !image) {
       Alert.alert('Missing info', 'Please add a name and an image.');
+      return;
+    }
+    if (!confirmedCrop) {
+      Alert.alert('Crop Required', 'Please confirm the crop to ensure the image only shows the material (no background).');
       return;
     }
     setSaving(true);
@@ -139,7 +146,20 @@ export default function AddMaterialScreen() {
                 returnKeyType="done"
                 blurOnSubmit={true}
               />
-              {image ? <Image source={{ uri: image }} style={{ width: '100%', height: 200, borderRadius: 8 }} /> : null}
+              {image ? (
+                <View style={{ width: '100%', alignItems: 'center', gap: 8 }}>
+                  <Image source={{ uri: image }} style={{ width: '100%', height: 220, borderRadius: 10 }} />
+                  {!confirmedCrop && (
+                    <Text style={styles.cropWarning}>Crop not confirmed yet. Make sure the image shows ONLY the material.</Text>
+                  )}
+                  {confirmedCrop && (
+                    <Text style={styles.cropConfirmed}>✅ Crop confirmed</Text>
+                  )}
+                  {!confirmedCrop && (
+                    <Button title="Confirm Crop" onPress={() => setConfirmedCrop(true)} />
+                  )}
+                </View>
+              ) : null}
               <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
                 <Button title="Take Photo" onPress={pickImage} />
                 <Button title="Choose Image" onPress={chooseFromLibrary} />
@@ -148,8 +168,9 @@ export default function AddMaterialScreen() {
               <Text style={styles.hint}>
                 {Platform.OS === 'web' 
                   ? 'Colors are automatically extracted from your image.'
-                  : 'Colors will be extracted automatically when you save!'}
+                  : 'After confirming crop, colors will be extracted automatically when you save!'}
               </Text>
+              <Text style={styles.cropGuidance}>Make sure your photo is tightly cropped to ONLY the material for accurate color percentages.</Text>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -188,5 +209,26 @@ const styles = StyleSheet.create({
     fontSize: 12, 
     color: '#666', 
     marginTop: 8 
+  },
+  cropWarning: {
+    fontSize: 12,
+    color: '#b45309',
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6
+  },
+  cropConfirmed: {
+    fontSize: 12,
+    color: '#065f46',
+    backgroundColor: '#d1fae5',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6
+  },
+  cropGuidance: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#555'
   }
 });
