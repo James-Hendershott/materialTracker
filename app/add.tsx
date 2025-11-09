@@ -1,5 +1,18 @@
 import * as React from 'react';
-import { View, Text, TextInput, Button, Image, StyleSheet, Platform, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  Button, 
+  Image, 
+  StyleSheet, 
+  Platform, 
+  Alert, 
+  KeyboardAvoidingView, 
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { saveMaterial, uploadImage } from '../src/storage/db';
@@ -75,29 +88,88 @@ export default function AddMaterialScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Add Material</Text>
-      <View style={{ gap: 8, width: '90%', maxWidth: 480 }}>
-        <TextInput placeholder="Name" value={name} onChangeText={setName} style={styles.input} />
-        <TextInput placeholder="Location (e.g., Bin A3)" value={location} onChangeText={setLocation} style={styles.input} />
-        <TextInput placeholder="Notes" value={notes} onChangeText={setNotes} style={[styles.input, { height: 80 }]} multiline />
-        {image ? <Image source={{ uri: image }} style={{ width: '100%', height: 200, borderRadius: 8 }} /> : null}
-        <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
-          <Button title="Take Photo" onPress={pickImage} />
-          <Button title="Choose Image" onPress={chooseFromLibrary} />
-        </View>
-        <Button title={saving ? 'Saving…' : 'Save'} onPress={onSave} disabled={saving} />
-        {Platform.OS !== 'web' && (
-          <Text style={styles.hint}>Color extraction will be added on native soon. For now, you can still save and search by name.</Text>
-        )}
-      </View>
-    </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={90}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.inner}>
+            <Text style={styles.header}>Add Material</Text>
+            <View style={{ gap: 8, width: '90%', maxWidth: 480 }}>
+              <TextInput 
+                placeholder="Name" 
+                value={name} 
+                onChangeText={setName} 
+                style={styles.input}
+                returnKeyType="next"
+              />
+              <TextInput 
+                placeholder="Location (e.g., Bin A3)" 
+                value={location} 
+                onChangeText={setLocation} 
+                style={styles.input}
+                returnKeyType="next"
+              />
+              <TextInput 
+                placeholder="Notes" 
+                value={notes} 
+                onChangeText={setNotes} 
+                style={[styles.input, { height: 80 }]} 
+                multiline
+                returnKeyType="done"
+                blurOnSubmit={true}
+              />
+              {image ? <Image source={{ uri: image }} style={{ width: '100%', height: 200, borderRadius: 8 }} /> : null}
+              <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
+                <Button title="Take Photo" onPress={pickImage} />
+                <Button title="Choose Image" onPress={chooseFromLibrary} />
+              </View>
+              <Button title={saving ? 'Saving…' : 'Save'} onPress={onSave} disabled={saving} />
+              {Platform.OS !== 'web' && (
+                <Text style={styles.hint}>Color extraction will be added on native soon. For now, you can still save and search by name.</Text>
+              )}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', paddingTop: 24, backgroundColor: '#fff' },
-  header: { fontSize: 22, fontWeight: '700', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12 },
-  hint: { fontSize: 12, color: '#666', marginTop: 8 }
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff' 
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 24,
+    paddingBottom: 40,
+  },
+  inner: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  header: { 
+    fontSize: 22, 
+    fontWeight: '700', 
+    marginBottom: 12 
+  },
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    borderRadius: 8, 
+    padding: 12,
+    backgroundColor: '#fff',
+  },
+  hint: { 
+    fontSize: 12, 
+    color: '#666', 
+    marginTop: 8 
+  }
 });
