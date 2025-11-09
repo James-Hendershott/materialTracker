@@ -16,16 +16,18 @@
 - ✅ **Display color swatches and names in search**
 
 ## In Progress
-- [ ] Home screen material list/grid view
-- [ ] Material deletion UI
-- [ ] Refresh/pull-to-refresh on search screen
-- [ ] Loading states and error handling UI
-- [ ] Add a Inventory Page
+- [x] Home screen material list/grid view
+- [x] Material deletion UI
+- [x] Refresh/pull-to-refresh on search screen
+- [x] Loading states and error handling UI (Home, Detail, Search baseline)
+- [ ] Can you allow the user to crop the image to be only the material and not the background?
+- [ ] When colors are extracted, is there a way to add a percentage of the color? e.g. Blue 82%
+- [ ] Add an Inventory Page
 - [ ] Add a QTY tracker with live updates including mins and maxes
 - [ ] Add Categories, ability to create and use categories and edit.
 - [ ] Add a Project Page (Create a Project, add material to the project, add Image)
 - [ ] Add a Shopping List
-- [ ] 
+- [ ] Add a modern look and sleek user experience
 
 ## Near-term Enhancements
 - [ ] Authentication (JWT-based user login)

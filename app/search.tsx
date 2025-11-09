@@ -1,5 +1,15 @@
 import * as React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, TextInput } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  FlatList, 
+  Image, 
+  TouchableOpacity, 
+  TextInput, 
+  RefreshControl,
+  ActivityIndicator 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { getAllMaterials } from '../src/storage/db';
 import { searchByColor } from '../src/utils/colors';
@@ -10,15 +20,30 @@ export default function SearchScreen() {
   const [allMaterials, setAllMaterials] = React.useState<Material[]>([]);
   const [filtered, setFiltered] = React.useState<Material[]>([]);
   const [query, setQuery] = React.useState('');
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    async function loadMaterials() {
+  const loadMaterials = React.useCallback(async () => {
+    try {
       const list = await getAllMaterials();
       setAllMaterials(list);
       setFiltered(list);
+    } catch (error) {
+      console.error('Failed to load materials:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-    loadMaterials();
   }, []);
+
+  React.useEffect(() => {
+    loadMaterials();
+  }, [loadMaterials]);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    loadMaterials();
+  }, [loadMaterials]);
 
   React.useEffect(() => {
     if (!query.trim()) {
@@ -36,18 +61,38 @@ export default function SearchScreen() {
     setFiltered(combined);
   }, [query, allMaterials]);
 
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#0366d6" />
+        <Text style={styles.loadingText}>Loading materials...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Search Materials</Text>
+      <View style={styles.headerSection}>
+        <Text style={styles.header}>Search Materials</Text>
+        <Text style={styles.resultCount}>
+          {filtered.length} of {allMaterials.length} materials
+        </Text>
+      </View>
       <TextInput
-        placeholder="e.g., green, wool, bin A..."
+        placeholder="Search by name, location, or color..."
         value={query}
         onChangeText={setQuery}
         style={styles.searchInput}
+        clearButtonMode="while-editing"
+        returnKeyType="search"
       />
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
@@ -90,12 +135,86 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  header: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
-  searchInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 12 },
-  card: { flexDirection: 'row', gap: 12, padding: 12, borderRadius: 8, backgroundColor: '#f9f9f9', marginBottom: 8 },
-  thumb: { width: 80, height: 80, borderRadius: 6 },
-  name: { fontSize: 16, fontWeight: '600' },
-  location: { fontSize: 12, color: '#666' },
-  colorText: { fontSize: 11, color: '#888', fontStyle: 'italic', marginTop: 2 }
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f5f5f5', 
+    padding: 16 
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  headerSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  header: { 
+    fontSize: 28, 
+    fontWeight: '700', 
+    color: '#333',
+  },
+  resultCount: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  searchInput: { 
+    backgroundColor: '#fff',
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    borderRadius: 10, 
+    padding: 12, 
+    marginBottom: 16,
+    fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  card: { 
+    flexDirection: 'row', 
+    gap: 12, 
+    padding: 16, 
+    borderRadius: 12, 
+    backgroundColor: '#fff', 
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  thumb: { 
+    width: 80, 
+    height: 80, 
+    borderRadius: 8 
+  },
+  name: { 
+    fontSize: 18, 
+    fontWeight: '600',
+    color: '#333',
+  },
+  location: { 
+    fontSize: 14, 
+    color: '#666',
+    marginTop: 2,
+  },
+  colorText: { 
+    fontSize: 12, 
+    color: '#888', 
+    marginTop: 4 
+  }
 });
