@@ -34,14 +34,27 @@ export default function AddMaterialScreen() {
       Alert.alert('Permission required', 'Camera permission is needed to take photos.');
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
+    const result = await ImagePicker.launchCameraAsync({ 
+      quality: 0.7,
+      allowsEditing: true, // enable cropping UI after capture
+      aspect: undefined // freeform crop
+    });
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   }
 
   async function chooseFromLibrary() {
-    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Photo library permission is needed to choose images.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ 
+      quality: 0.7,
+      allowsEditing: true, // enable cropping UI before selecting
+      aspect: undefined // freeform crop
+    });
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
