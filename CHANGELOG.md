@@ -2,6 +2,40 @@
 
 All notable changes will be documented in this file.
 
+## [0.3.0] - 2025-11-09
+### Added
+- **Smart color extraction** for iOS/Android using expo-image-manipulator
+- Cross-platform `extractPalette()` function works on web and native
+- Automatic color detection from images using k-means clustering
+- Color swatches displayed in search results
+- Color name labels (red, blue, green, etc.) shown in material cards
+- API key authentication middleware (x-api-key header)
+- Rate limiting (100 requests per 15 minutes)
+- CORS protection with origin whitelist
+- Helmet.js security headers
+- Keyboard avoidance in Add Material form
+- `react-native-get-random-values` polyfill for UUID generation
+- Comprehensive security documentation (`notes/80-security-setup.md`)
+- iPhone testing guide (`TESTING_ON_IPHONE.md`)
+- Getting started guide (`GETTING_STARTED.md`)
+- Connection troubleshooting script (`test-connection.bat`)
+
+### Fixed
+- Keyboard covering save button on mobile devices
+- `crypto.getRandomValues()` not supported error on React Native
+- Server TypeScript execution with proper tsconfig.server.json
+- Network request failures with proper error handling
+
+### Security
+- Generated secure API key for production use
+- Configured API authentication for all endpoints (except health check)
+- Added rate limiting to prevent abuse
+- Implemented CORS whitelist for origin control
+
+### Dependencies
+- Added: `helmet`, `express-rate-limit`, `expo-image-manipulator`, `react-native-get-random-values`
+- Added dev: `@types/express-rate-limit`
+
 ## [0.2.0] - 2025-11-08
 ### Added
 - **Server-side storage** with support for PostgreSQL, MongoDB, and MariaDB on Unraid
