@@ -30,6 +30,7 @@ export default function AddMaterialScreen() {
   const router = useRouter();
   const [image, setImage] = React.useState<string | null>(null);
   const [confirmedCrop, setConfirmedCrop] = React.useState(false);
+  const [recropPromptOpen, setRecropPromptOpen] = React.useState(false);
   const [name, setName] = React.useState('');
   const [location, setLocation] = React.useState('');
   const [notes, setNotes] = React.useState('');
@@ -181,6 +182,9 @@ export default function AddMaterialScreen() {
                   {!confirmedCrop && (
                     <Button title="Confirm Crop" onPress={() => setConfirmedCrop(true)} />
                   )}
+                  {!confirmedCrop && (
+                    <Button title="Re-Crop" onPress={() => setRecropPromptOpen(true)} />
+                  )}
                   {colors && colors.length > 0 && (
                     <Button title="Edit Colors" onPress={() => setShowEditColors(true)} />
                   )}
@@ -244,6 +248,21 @@ export default function AddMaterialScreen() {
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
               <Button title="Normalize" onPress={() => colors && setColors(normalizePercents(colors))} />
               <Button title="Done" onPress={() => setShowEditColors(false)} />
+            </View>
+          </View>
+        </View>
+      )}
+      {recropPromptOpen && (
+        <View style={styles.editOverlay}>
+          <View style={styles.editSheet}>
+            <Text style={styles.editTitle}>Re-crop Image</Text>
+            <Text style={{ marginBottom: 12 }}>Choose how you'd like to re-crop the image.</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button title="Retake Photo" onPress={async () => { setRecropPromptOpen(false); await pickImage(); }} />
+              <Button title="Choose From Library" onPress={async () => { setRecropPromptOpen(false); await chooseFromLibrary(); }} />
+            </View>
+            <View style={{ marginTop: 8 }}>
+              <Button title="Cancel" onPress={() => setRecropPromptOpen(false)} />
             </View>
           </View>
         </View>
