@@ -78,7 +78,8 @@
 - No conflict resolution for simultaneous edits from multiple devices
 - Image upload may fail on slow connections (no retry logic)
 - Color extraction accuracy can vary (base64 sampling approximation)
-- Colors being extracted are way off. Black shirt with Gray and Red is coming up with red - 28% #694944, Gray -16% #685f
+- Colors being extracted are way off. Black shirt with Gray and Red is coming up with red - 28% #694944, Gray -16% #68536f, green - 14% #457157, yellow - 14% #656f3c, gray - 28% #4a435b. Can we maybe make it less specific to all the colors and provide a basic color option? 
+- Cropping is required when adding an image which is great, but it does not give the ability to re-crop after that. We need to allow them to edit the crop before confirming if needed.
 
 ---
 Updated: 2025-11-09
