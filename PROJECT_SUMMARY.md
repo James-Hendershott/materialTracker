@@ -2,7 +2,7 @@
 
 ## 🎉 What We Built
 
-A **cross-platform material tracking app** with **server-side storage on your Unraid server**.
+A **cross-platform material tracking app** with **server-side storage on my Unraid server**.
 
 ### Version 0.2.0 - Server Integration Complete!
 
